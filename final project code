@@ -1,0 +1,176 @@
+import sqlite3
+
+conn = sqlite3.connect('Student_info.db')
+cur = conn.cursor()
+
+MIN_CHOICE = 1
+MAX_CHOICE = 5
+CREATE = 1
+READ = 2
+UPDATE = 3
+DELETE = 4
+EXIT = 5
+def display():
+    cur.execute('SELECT * FROM Entries')
+    results = cur.fetchall()
+
+    print('Contents of Student_info.db/Entries table:')
+    for row in results:
+        print(f'{row[0]:<3} {row[1]}, {row[2]}, {row[3]}, {row[4]}, {row[5]}, {row[6]}')
+#f'{row[0]:<3}{row[1]:20}{row[2]:.0f}{row[3]:20}{row[4]:.2f}{row[5]:20}{row[6]:20}'
+def delete_data():
+    display()
+#select row
+    del_row = int(input('Which row will be deleted?: '))
+#delete row
+    try:
+        cur.execute('DELETE FROM Entries WHERE StudentID = ?', (del_row,))
+        conn.commit()
+        print('Record deleted successfully.')
+    except sqlite3.Error as e:
+        print(f'Error deleting data: {e}')
+
+def update_data():
+    display()
+#what to update
+    update_row = int(input('Which row will be updated?: '))
+    update_entry = input('Which entry will be updated (name, age, gender, gpa, major, year)?: ').lower()
+#enter change and insert to db
+    if update_entry == 'name':
+        try:
+            update_name = input('What is the new name?: ')
+            cur.execute('UPDATE Entries SET StudentName = ? WHERE StudentID = ?', (update_name, update_row))
+            conn.commit()
+            print('Record updated successfully.')
+        except sqlite3.Error as e:
+            print(f'Error updating data: {e}')
+    elif update_entry == 'age':
+        try:
+            update_age = int(input('What is the new age?: '))
+            cur.execute("UPDATE Entries SET StudentAge = ? WHERE StudentID = ?", (update_age, update_row))
+            conn.commit()
+            print("Record updated successfully.")
+        except sqlite3.Error as e:
+            print(f"Error updating data: {e}")
+    elif update_entry == 'gender':
+        try:
+            update_gender = input('Enter gender: ')
+            cur.execute("UPDATE Entries SET StudentGender = ? WHERE StudentID = ?", (update_gender, update_row))
+            conn.commit()
+            print("Record updated successfully.")
+        except sqlite3.Error as e:
+            print(f"Error updating data: {e}")
+    elif update_entry == 'gpa':
+        try:
+            update_gpa = float(input('What is the new GPA?: '))
+            cur.execute("UPDATE Entries SET StudentGPA = ? WHERE StudentID = ?", (update_gpa, update_row))
+            conn.commit()
+            print("Record updated successfully.")
+        except sqlite3.Error as e:
+            print(f"Error updating data: {e}")
+    elif update_entry == 'major':
+        try:
+            update_major = int(input('What is the new major?: '))
+            cur.execute("UPDATE Entries SET StudentMajor = ? WHERE StudentID = ?", (update_major, update_row))
+            conn.commit()
+            print("Record updated successfully.")
+        except sqlite3.Error as e:
+            print(f"Error updating data: {e}")
+    elif update_entry == 'year':
+        try:
+            update_year = int(input('What is the new year?: '))
+            cur.execute("UPDATE Entries SET StudentYear = ? WHERE StudentID = ?", (update_year, update_row))
+            conn.commit()
+            print("Record updated successfully.")
+        except sqlite3.Error as e:
+            print(f"Error updating data: {e}")
+    else:
+        print('Invalid entry.')
+
+def add_data():
+    display()
+#create unique entry ID
+    cur.execute('SELECT StudentID FROM Entries')
+    result = [row[0] for row in cur.fetchall()]
+    smallest_unique_id = 1
+    while smallest_unique_id in result:
+        smallest_unique_id += 1
+#enter info
+    new_name = input('Enter name that will be added to the new row: ')
+    new_age = input('Enter age that will be added to the new row: ')
+    new_gender = input('Enter gender that will be added to the new row: ')
+    new_gpa = input('Enter gpa that will be added to the new row: ')
+    new_major = input('Enter major that will be added to the new row: ')
+    new_year = input('Enter year that will be added to the new row: ')
+#insert info to db
+    try:
+        cur.execute('''INSERT INTO Entries (StudentID, StudentName, StudentAge, StudentGender, StudentGPA, StudentMajor, StudentYear)
+                               VALUES (?, ?, ?, ?, ?, ?, ?)''', (smallest_unique_id, new_name, new_age, new_gender, new_gpa, new_major, new_year))
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f'Error updating data: {e}')
+
+def main():
+    choice = 0
+    while choice != EXIT:
+        display_menu()
+        choice = get_menu_choice()
+
+        if choice == CREATE:
+            add_data()
+            display()
+        elif choice == READ:
+            display()
+        elif choice == UPDATE:
+            update_data()
+            display()
+        elif choice == DELETE:
+            delete_data()
+            display()
+
+def display_menu():
+    print('\n----- Student Database Menu -----')
+    print('1. Create a new entry')
+    print('2. Read an entry')
+    print('3. Update an entry')
+    print('4. Delete an entry')
+    print('5. Exit the program')
+
+def get_menu_choice():
+    choice = int(input("Enter the number of your choice: "))
+
+    while choice < MIN_CHOICE or choice > MAX_CHOICE:
+        print(f'Error: VAlid choices are {MIN_CHOICE} through {MAX_CHOICE}.')
+        choice = int(input("Enter the number of your choice: "))
+
+    return choice
+
+def create_db():
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS Entries (
+    StudentID INTEGER PRIMARY KEY NOT NULL,
+    StudentName TEXT NOT NULL,
+    StudentAge INTEGER NOT NULL,
+    StudentGender TEXT NOT NULL,
+    StudentGPA REAL,
+    StudentMajor TEXT NOT NULL,
+    StudentYear TEXT NOT NULL)''')
+
+    student_data = [
+    (1, "John Block", 18, "Male", 3.87, "Finance", "Freshman"),
+    (2, "Melissa Steiner", 20, "Female", 4.00, "Nursing", "Junior"),
+    (3, "Clare Stumpf", 18, "Female", 3.99, "Biochemistry", "Freshman"),
+    (4, "Patrick McKinney", 22, "Male", 2.41, "Sports Management", "Senior"),
+    (5, "Cameron Joyce", 19, "Male", 2.17 , "Computer Science", "Sophomore"),
+    (6, "Natalie Schalow", 17, "Female", 3.63, "Systematic Theology", "PSEO")
+    ]
+    try:
+     cur.executemany('''INSERT INTO Entries (StudentID, StudentName, StudentAge, StudentGender, StudentGPA, StudentMajor, StudentYear)
+            VALUES  (?, ?, ?, ?, ?, ?, ?)''', student_data)
+    except sqlite3.IntegrityError:
+     print('')
+
+if __name__ == '__main__':
+    create_db()
+    main()
+    conn.close()
